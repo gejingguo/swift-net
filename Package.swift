@@ -8,7 +8,7 @@ let package = Package(
 name: "swift-test",
         targets: [],
         dependencies: [
-                .Package(url: "../CLibuv", majorVersion: 1),
+                .Package(url: "https://github.com/gejingguo/CLibuv", majorVersion: 1),
 		    //.Package(url: "../swift-uv", majorVersion: 1),
         ]
 )
