@@ -7,7 +7,7 @@ import CLibuv
 //import Loop
 
 func onTCPServerNewConnection(req: UnsafeMutablePointer<uv_stream_t>, status: Int32) {
-    let err = status == 0 ? TCPError.TCPSuccessed : TCPError.TCPServerNewClient(status)
+    let err:TCPError? = (status == 0 ? nil : TCPError.TCPServerNewClient(status))
     let ptr = req.memory.data
 
     if let server = unsafeBitCast(ptr, TCPServerHandle.self).server {

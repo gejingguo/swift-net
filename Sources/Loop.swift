@@ -5,10 +5,11 @@
 import CLibuv
 
 public protocol TCPDelegate {
-    func onTCPServerNewClient(server: TCPServer, err: TCPError)
+    func onTCPServerNewClient(server: TCPServer, err: TCPError?)
     func onTCPClientRecved(client: TCPClient)
     func onTCPClientError(client: TCPClient, err: TCPError)
     func onTCPClientSendOut(client: TCPClient)
+    func onTCPClientConnected(client: TCPClient, err: TCPError?)
 }
 
 public class Loop {

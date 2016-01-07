@@ -10,10 +10,14 @@ class TCPClientHandle {
     weak var client: TCPClient? = nil
 }
 
+// 客户端链接的抽象概念
+// 1. 服务器接受的客户端链接
+// 2. 主动链接其他服务器的客户端链接
 public class TCPClient {
     var loop: Loop? = nil
     var client: UnsafeMutablePointer<uv_tcp_t> = nil
     var writeReq: UnsafeMutablePointer<uv_write_t> = nil
+    var connectReq: UnsafeMutablePointer<uv_connect_t> = nil
     var readBuff: TCPBuffer
     var writeBuff: TCPBuffer
     var writeingPktCount = 0
@@ -22,11 +26,13 @@ public class TCPClient {
     public var flag: Int = 0
     public var connected: Bool = false
     public var peerAddr: String = ""
+    private var connecting: Bool = false
 
 
     public init() {
         client = UnsafeMutablePointer<uv_tcp_t>.alloc(1)
         writeReq = UnsafeMutablePointer<uv_write_t>.alloc(1)
+        connectReq = UnsafeMutablePointer<uv_connect_t>.alloc(1)
         readBuff = TCPBuffer(0, pktCount: 1)
         writeBuff = TCPBuffer(0, pktCount: 0)
         handle = TCPClientHandle()
@@ -40,6 +46,9 @@ public class TCPClient {
         }
         if writeReq != nil {
             writeReq.dealloc(1)
+        }
+        if connectReq != nil {
+            connectReq.dealloc(1)
         }
     }
 
@@ -68,10 +77,14 @@ public class TCPClient {
         self.writeingPktCount = 0
         self.connected = false
         self.peerAddr = ""
+        self.connecting = false
     }
 
     func getPeerAddr() {
         if !self.connected {
+            return
+        }
+        if self.peerAddr != "" {
             return
         }
         let addr = UnsafeMutablePointer<sockaddr>.alloc(1)
@@ -93,8 +106,27 @@ public class TCPClient {
         self.peerAddr = String.fromCString(addrStr) ?? ""
     }
 
-    public func connect() throws {
+    public func startConnect(server: String, port: Int) throws {
+        if self.connecting || self.connected {
+            throw TCPError.TCPClientConnecting
+        }
+        let addr = UnsafeMutablePointer<sockaddr_in>.alloc(1)
+        defer { addr.dealloc(1) }
 
+        var ret = server.withCString { (cstr) -> Int32 in
+            return uv_ip4_addr(cstr, (Int32)(port), addr)
+        }
+        if ret != 0 {
+            throw TCPError.TCPServerIP4Addr(ret)
+        }
+        let ptr = unsafeAddressOf(handle)
+        client.memory.data = unsafeBitCast(ptr, UnsafeMutablePointer<Void>.self)
+        ret = uv_tcp_connect(connectReq, client, UnsafeMutablePointer<sockaddr>(addr), onTCPClientConnect)
+        if ret != 0 {
+            throw TCPError.TCPClientStartConnect(ret)
+        }
+        self.peerAddr = server
+        self.connecting = true
     }
 
     func startRead() throws {
@@ -225,5 +257,27 @@ func onTCPClientWrite(req: UnsafeMutablePointer<uv_write_t>, ret: Int32) {
             }
         }
         print("write over..")
+    }
+}
+
+func onTCPClientConnect(req: UnsafeMutablePointer<uv_connect_t>, ret: Int32) {
+    let client_t = req.memory.handle
+    let ptr = client_t.memory.data
+    if let client = unsafeBitCast(ptr, TCPClientHandle.self).client {
+        if ret != 0 {
+            client.loop?.delegate.onTCPClientConnected(client, err: TCPError.TCPClientConnect(ret))
+            client.destroy()
+        } else {
+            // connect ok
+            client.connecting = false
+            client.connected = true
+            do {
+                try client.startRead()
+                client.loop?.delegate.onTCPClientConnected(client, err: nil)
+            } catch {
+                client.loop?.delegate.onTCPClientConnected(client, err: error as? TCPError)
+                client.destroy()
+            }
+        }
     }
 }
