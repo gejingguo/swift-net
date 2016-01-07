@@ -20,7 +20,7 @@ class TCPServerHandle {
 }
 
 public class TCPServer {
-    weak var loop: Loop? = nil
+    public weak var loop: Loop? = nil
     var server: UnsafeMutablePointer<uv_tcp_t> = nil
     public var flag: Int = 0
     var handle: TCPServerHandle
