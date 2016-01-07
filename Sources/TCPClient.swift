@@ -52,7 +52,7 @@ public class TCPClient {
         }
     }
 
-    func initWithLoop(loop: Loop) throws {
+    public func initWithLoop(loop: Loop) throws {
         if self.loop != nil {
             destroy()
         }
@@ -107,6 +107,7 @@ public class TCPClient {
     }
 
     public func startConnect(server: String, port: Int) throws {
+
         if self.connecting || self.connected {
             throw TCPError.TCPClientConnecting
         }
