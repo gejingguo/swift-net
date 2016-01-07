@@ -4,13 +4,13 @@
 
 import Foundation
 
-class TCPClientMgr {
+public class TCPClientMgr {
     private var client: [TCPClient]
     private var capacity = 0
     private var add = 0
     private var free: [Int]
 
-    init(add: Int, capacity: Int) {
+    public init(add: Int, capacity: Int) {
         self.capacity = capacity
         self.add = add
         self.client = []
@@ -21,7 +21,7 @@ class TCPClientMgr {
 
     }
 
-    func alloc(loop: Loop) throws -> TCPClient?  {
+    public func alloc(loop: Loop) throws -> TCPClient?  {
         if client.count >= self.capacity {
             return nil
         }
@@ -41,7 +41,7 @@ class TCPClientMgr {
         return cli
     }
 
-    func free(cli: TCPClient) {
+    public func free(cli: TCPClient) {
         cli.destroy()
         free.append(cli.index)
     }

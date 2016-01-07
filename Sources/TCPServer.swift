@@ -22,7 +22,7 @@ class TCPServerHandle {
 public class TCPServer {
     weak var loop: Loop? = nil
     var server: UnsafeMutablePointer<uv_tcp_t> = nil
-    var flag: Int = 0
+    public var flag: Int = 0
     var handle: TCPServerHandle
 
     public init(loop: Loop) {
@@ -78,10 +78,6 @@ public class TCPServer {
 
     public func listen(port: Int32) throws {
         return try listen("0.0.0.0", port: port)
-    }
-
-    public func test() {
-        print("hello test.")
     }
 
     public func accept(client: TCPClient) throws {

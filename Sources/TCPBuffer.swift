@@ -9,13 +9,13 @@ import Glibc
 import Darwin
 #endif
 
-class TCPPkt: CustomStringConvertible {
+public class TCPPkt: CustomStringConvertible {
     var data: UnsafeMutablePointer<CChar> = nil
     var read: Int = 0
     var write: Int = 0
-    var capacity: Int = 0
+    public var capacity: Int = 0
 
-    init(_ capacity: Int) {
+    public init(_ capacity: Int) {
         self.capacity = capacity;
         data = UnsafeMutablePointer<CChar>.alloc(self.capacity+1)
         data.initialize(0)
@@ -28,25 +28,25 @@ class TCPPkt: CustomStringConvertible {
         }
     }
 
-    var readAddr: UnsafeMutablePointer<CChar> {
+    public var readAddr: UnsafeMutablePointer<CChar> {
         return data.advancedBy(read)
     }
-    var size: Int {
+    public var size: Int {
         return write - read
     }
-    var writeAddr: UnsafeMutablePointer<CChar> {
+    public var writeAddr: UnsafeMutablePointer<CChar> {
         return data.advancedBy(write)
     }
-    var space: Int {
+    public var space: Int {
         return (capacity - write)
     }
 
-    func clear() {
+    public func clear() {
         read = 0
         write = 0
     }
 
-    var description: String {
+    public var description: String {
         // 保证0结束
         data.advancedBy(write).memory = 0
         if let str = String.fromCString(readAddr) {
@@ -61,7 +61,7 @@ public class TCPBuffer: CustomStringConvertible {
     static let MIN_PKT_SIZE: Int = 12
     var pkts: [TCPPkt] = []
 
-    init(_ pktLen: Int, pktCount: Int) {
+    public init(_ pktLen: Int, pktCount: Int) {
         self.pktLen = (pktLen > TCPBuffer.MIN_PKT_SIZE ? pktLen : TCPBuffer.MIN_PKT_SIZE)
         self.allocPkt(pktCount)
     }
@@ -77,7 +77,7 @@ public class TCPBuffer: CustomStringConvertible {
         }
     }
 
-    var size: Int {
+    public var size: Int {
         var rsize = 0
         for pkt in pkts {
             rsize += pkt.size
@@ -85,7 +85,7 @@ public class TCPBuffer: CustomStringConvertible {
         return rsize
     }
 
-    func getBuffer(n: Int) -> TCPBuffer? {
+    public func getBuffer(n: Int) -> TCPBuffer? {
         if size < n {
             return nil
         }
@@ -127,14 +127,14 @@ public class TCPBuffer: CustomStringConvertible {
         return buf
     }
 
-    func append(buf: TCPBuffer) {
+    public func append(buf: TCPBuffer) {
         for pkt in buf.pkts {
             pkts.append(pkt)
         }
         buf.pkts.removeAll(keepCapacity: true)
     }
 
-    func clear() {
+    public func clear() {
         for pkt in pkts {
             pkt.clear()
         }
