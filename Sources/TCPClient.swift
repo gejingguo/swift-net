@@ -21,6 +21,7 @@ public class TCPClient {
     private var handle: TCPClientHandle
     public var flag: Int = 0
     public var connected: Bool = false
+    public var peerAddr: String = ""
 
 
     public init() {
@@ -66,6 +67,34 @@ public class TCPClient {
         self.writeBuff.clear()
         self.writeingPktCount = 0
         self.connected = false
+        self.peerAddr = ""
+    }
+
+    func getPeerAddr() {
+        if !self.connected {
+            return
+        }
+        let addr = UnsafeMutablePointer<sockaddr>.alloc(1)
+        //addr.initialize(0)
+        defer { addr.dealloc(1)}
+        var len: Int32 = (Int32)(sizeof(sockaddr.self))
+        var ret = uv_tcp_getpeername(client, addr, &len)
+        if ret != 0 {
+            return
+        }
+        let slen = 32
+        let addrStr = UnsafeMutablePointer<CChar>.alloc(slen)
+        //addrStr.initialize(0)
+        defer { addrStr.dealloc(slen) }
+        ret = uv_ip4_name(UnsafeMutablePointer<sockaddr_in>(addr), addrStr, slen)
+        if ret != 0 {
+            return
+        }
+        self.peerAddr = String.fromCString(addrStr) ?? ""
+    }
+
+    public func connect() throws {
+
     }
 
     func startRead() throws {

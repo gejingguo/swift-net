@@ -86,6 +86,7 @@ public class TCPServer {
             throw TCPError.TCPServerAccept(ret)
         }
         client.connected = true
+        client.getPeerAddr()
         // 设置开始读
         try client.startRead()
     }
